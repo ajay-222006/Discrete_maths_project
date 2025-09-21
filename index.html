@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Shortest Path Visualizer</title>
+  <script src="https://unpkg.com/vis-network/standalone/umd/vis-network.min.js"></script>
+  <style>
+    body {
+      font-family: "Segoe UI", sans-serif;
+      background: #0f172a;
+      margin: 0;
+      color: #e2e8f0;
+      text-align: center;
+    }
+    header {
+      background: #1e293b;
+      color: #38bdf8;
+      padding: 20px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.5);
+    }
+    header h1 {
+      margin: 0;
+      font-size: 28px;
+      letter-spacing: 1px;
+    }
+    .controls {
+      background: #1e293b;
+      width: 80%;
+      margin: 20px auto;
+      padding: 20px;
+      border-radius: 12px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+    }
+    .form-group {
+      margin: 12px 0;
+      display: flex;
+      justify-content: center;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+    input {
+      padding: 10px 14px;
+      border: 1px solid #334155;
+      border-radius: 6px;
+      font-size: 14px;
+      background: #0f172a;
+      color: #e2e8f0;
+    }
+    input:focus {
+      outline: none;
+      border-color: #38bdf8;
+      box-shadow: 0 0 5px #38bdf8;
+    }
+    button {
+      padding: 10px 18px;
+      background: #38bdf8;
+      color: #0f172a;
+      border: none;
+      font-weight: 600;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: 0.2s;
+    }
+    button:hover {
+      background: #0ea5e9;
+      color: white;
+    }
+    #mynetwork {
+      height: 500px;
+      width: 85%;
+      margin: 20px auto;
+      border: 2px solid #334155;
+      border-radius: 12px;
+      background: #0f172a;
+    }
+    .output {
+      margin-top: 15px;
+      font-size: 18px;
+      font-weight: 600;
+      color: #38bdf8;
+      background: #1e293b;
+      padding: 12px;
+      border-radius: 8px;
+      display: inline-block;
+      min-width: 300px;
+    }
+    footer {
+      margin-top: 25px;
+      padding: 14px;
+      font-size: 14px;
+      background: #1e293b;
+      color: #94a3b8;
+    }
+    .names {
+      margin-top: 10px;
+      font-size: 14px;
+      color: #94a3b8;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Shortest Path Visualizer (Dijkstra)</h1>
+  </header>
+
+  <section class="controls">
+    <div class="form-group">
+      <input type="text" id="nodeName" placeholder="Node Name (e.g., A)">
+      <button id="addNodeBtn">Add Node</button>
+    </div>
+    <div class="form-group">
+      <input type="text" id="fromNode" placeholder="From Node (e.g., A)">
+      <input type="text" id="toNode" placeholder="To Node (e.g., B)">
+      <input type="number" id="weight" placeholder="Weight">
+      <button id="addEdgeBtn">Add Edge</button>
+    </div>
+    <div class="form-group">
+      <input type="text" id="sourceNode" placeholder="Source Node">
+      <input type="text" id="destNode" placeholder="Destination Node">
+      <button id="computeBtn">Find Shortest Path</button>
+      <button id="resetBtn" style="background:#f43f5e;">Reset Graph</button>
+    </div>
+  </section>
+
+  <div id="mynetwork"></div>
+  <div class="output" id="output">Enter graph details to begin...</div>
+
+  <footer>
+    <div class="names">
+      Mathivanan S 23MIS0372 | Vijay kumar H 23MIS0432 | Ajay S 23MIS0433
+    </div>
+    © 2025 | Shortest Path Visualizer
+  </footer>
+
+  <script>
+    var nodes = new vis.DataSet([]);
+    var edges = new vis.DataSet([]);
+    var container = document.getElementById('mynetwork');
+    var data = { nodes: nodes, edges: edges };
+    var options = {
+      nodes: {
+        shape: 'circle',
+        color: { background: '#1e40af', border: '#38bdf8' },
+        font: { size: 16, color: '#f8fafc' }
+      },
+      edges: {
+        arrows: { to: false },
+        color: { color: '#64748b' },
+        width: 2,
+        smooth: { enabled: false },
+        font: { align: 'top', color: '#f8fafc' }
+      },
+      physics: true
+    };
+    var network = new vis.Network(container, data, options);
+
+    let graph = {};
+
+    document.getElementById("addNodeBtn").addEventListener("click", function() {
+      let nodeName = document.getElementById("nodeName").value.trim();
+      if(nodeName && !graph[nodeName]) {
+        nodes.add({id: nodeName, label: nodeName});
+        graph[nodeName] = [];
+        document.getElementById("nodeName").value = "";
+      } else alert("Invalid or duplicate node!");
+    });
+
+    document.getElementById("addEdgeBtn").addEventListener("click", function() {
+      let from = document.getElementById("fromNode").value.trim();
+      let to = document.getElementById("toNode").value.trim();
+      let weight = parseInt(document.getElementById("weight").value);
+      if(from && to && !isNaN(weight) && graph[from] && graph[to]) {
+        let edgeId = from+"-"+to+"-"+weight+"-"+Math.random();
+        edges.add({id: edgeId, from: from, to: to, label: weight.toString(), value: weight});
+        graph[from].push([to, weight]);
+        graph[to].push([from, weight]);
+        document.getElementById("fromNode").value = "";
+        document.getElementById("toNode").value = "";
+        document.getElementById("weight").value = "";
+      } else alert("Invalid edge or nodes do not exist!");
+    });
+
+    document.getElementById("resetBtn").addEventListener("click", function() {
+      nodes.clear();
+      edges.clear();
+      graph = {};
+      document.getElementById("output").innerHTML = "Graph has been reset!";
+    });
+
+    function dijkstra(graph, source, target) {
+      let dist = {}, prev = {}, Q = new Set(Object.keys(graph));
+      for (let v of Q) dist[v] = Infinity;
+      dist[source] = 0;
+      while (Q.size) {
+        let u = [...Q].reduce((a,b) => dist[a] < dist[b] ? a : b);
+        Q.delete(u);
+        if (u === target) break;
+        for (let [v, weight] of graph[u]) {
+          let alt = dist[u] + weight;
+          if (alt < dist[v]) { dist[v] = alt; prev[v] = u; }
+        }
+      }
+      let path = [], u = target;
+      while(u){ path.unshift(u); u = prev[u]; }
+      return { path, distance: dist[target] };
+    }
+
+    document.getElementById("computeBtn").addEventListener("click", function() {
+      let source = document.getElementById("sourceNode").value.trim();
+      let dest = document.getElementById("destNode").value.trim();
+      if(!graph[source] || !graph[dest]) {
+        alert("Source or destination node does not exist!");
+        return;
+      }
+      let result = dijkstra(graph, source, dest);
+      if(!result.path.length || result.distance === Infinity) {
+        document.getElementById("output").innerHTML = "No path found!";
+        return;
+      }
+      edges.forEach(function(edge) {
+        edges.update({id: edge.id, color:{color:'#64748b'}, width: 2});
+      });
+      for(let i=0; i<result.path.length-1; i++) {
+        let edge = edges.get({
+          filter: function (item) {
+            return (item.from === result.path[i] && item.to === result.path[i+1]) ||
+                   (item.to === result.path[i] && item.from === result.path[i+1]);
+          }
+        })[0];
+        if(edge) edges.update({id: edge.id, color:{color:'#f43f5e'}, width:3});
+      }
+      document.getElementById("output").innerHTML =
+        "🚀 Shortest Path: " + result.path.join(" → ") +
+        "<br>📏 Total Distance: " + result.distance;
+    });
+  </script>
+</body>
+</html>
